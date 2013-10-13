@@ -17,6 +17,7 @@ function exception() {
 var test = function() {
     console.log("test")
     exception()
+    fact(3)
 }
       
 function foo() {
@@ -28,4 +29,9 @@ try {
     test()
 } catch(e) {
     console.log("caught", e)
+    fact(3)
 }
+
+setInterval(function() {
+    fact(5)
+}, 1000)

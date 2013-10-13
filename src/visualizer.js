@@ -9,7 +9,6 @@ function Visualizer(selector) {
 Visualizer.prototype.callgraph = function(callgraph) {
     $("#callgraph").remove()
     this.el.append('<ol id="callgraph"></ol>')
-    callgraph.stopTime = (new Date()).getTime()
 
     function addNode(graph, node) {
         var li = $("<li></li>").appendTo(graph)

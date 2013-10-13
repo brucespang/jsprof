@@ -1,3 +1,13 @@
+function count_uniq(xs) {
+    var counts = {}
+    for(var x in xs) {
+        if(!counts[xs[x]])
+            counts[xs[x]] = 0
+        counts[xs[x]] += 1
+    }
+    return counts
+}
+
 var Profiler = (function() {
     var date = new Date()
     
@@ -60,12 +70,37 @@ var Profiler = (function() {
             // profiler before propagating the exception
             // we need to wrap it in apply/lambda/return in case the programmer wants to do something insane like
             // store the result of a function call.
+            descend(node, this)
+            
             return Apply(Seq(Lambda([Try([Return(node)], [UglifyJS.parse("window.Profiler.exit()").body[0], UglifyJS.parse("throw e").body[0]])], []), null), [])
         }
     }
 
     var transformer = new UglifyJS.TreeTransformer(beforeVisitor)
-    
+
+    function paths(node) {
+        var ps = []
+        for(var c in node.children) {
+            var child_paths = paths(node.children[c])
+            for(var p in child_paths) {
+                child_paths[p].unshift(node.name)
+                ps.push(child_paths[p])
+            }
+        }
+        if(node.children.length == 0)
+            ps = [[node.name]]
+        return ps
+    }
+
+    function nodes(node) {
+        var ns = [node.name]
+        for(var c in node.children) {
+            var child_nodes = nodes(node.children[c])
+            $.merge(ns, child_nodes)
+        }
+        return ns
+    }
+
     return {
         enter: function(name, ref) {
             if(name != "window.root") {
@@ -81,6 +116,7 @@ var Profiler = (function() {
         },
         exit: function() {
             currentCall.stopTime = date.getTime()
+            callgraph.stopTime = currentCall.stopTime
             // we can't exit from the root node
             if(currentCall.prev)
                 currentCall = currentCall.prev
@@ -93,6 +129,12 @@ var Profiler = (function() {
         },
         callgraph: function() {
             return callgraph
+        },
+        paths: function() {
+            return paths(callgraph)
+        },
+        nodes: function() {
+            return nodes(callgraph)
         }
     }
 })()
