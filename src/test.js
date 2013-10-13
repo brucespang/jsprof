@@ -7,7 +7,7 @@ function fact(n) {
 
 function bar() {
     for(var i = 0; i < 4; i++)
-        console.log(fact(i))
+        fact(i)
 }
 
 function exception() {
@@ -33,5 +33,5 @@ try {
 }
 
 setInterval(function() {
-    fact(5)
+    fact(5000)
 }, 1000)

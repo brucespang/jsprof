@@ -9,11 +9,9 @@ function count_uniq(xs) {
 }
 
 var Profiler = (function() {
-    var date = new Date()
-    
     var callgraph = {
         name: "root",
-        startTime: date.getTime(),
+        startTime: Date.now(),
         children: []
     }
     var currentCall = callgraph
@@ -108,14 +106,14 @@ var Profiler = (function() {
                     name: name,
                     children: [],
                     prev: currentCall,
-                    startTime: date.getTime()
+                    startTime: Date.now()
                 }
                 currentCall.children.push(call)
                 currentCall = call
             }
         },
         exit: function() {
-            currentCall.stopTime = date.getTime()
+            currentCall.stopTime = Date.now()
             callgraph.stopTime = currentCall.stopTime
             // we can't exit from the root node
             if(currentCall.prev)
