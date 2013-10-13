@@ -21,9 +21,12 @@ var Profiler = (function() {
 
             descend(node, this)
 
-            var name = node.name ? node.name.name : null
-            if(name == null && node instanceof UglifyJS.AST_Lambda)
-                name = "[Anonymous]"
+            if(node.name)
+                var name = node.name.name
+            else if(node instanceof UglifyJS.AST_Lambda)
+                var name = "[Anonymous]"
+            else
+                var name = "window.root"
             
             node.body.unshift(UglifyJS.parse("window.Profiler.enter('"+name+"', this)").body[0])
             node.body.push(UglifyJS.parse("window.Profiler.exit()").body[0])
@@ -48,33 +51,39 @@ var Profiler = (function() {
             var assign = Assign(name, node.value)
             var exit = UglifyJS.parse("window.Profiler.exit()").body[0]
             
-            node.value = Apply(Lambda([assign, exit, Return(name)], []), [])
+            node.value = Apply(Seq(Lambda([assign, exit, Return(name)], []), null), [])
             
             return node
         } else if(node instanceof UglifyJS.AST_Call) {
             // we want to wrap all function calls in try/catch blocks so that if an exception
             // is thrown in the function, we can exit out of the current function in the
             // profiler before propagating the exception
-            return Try(node, UglifyJS.parse("window.Profiler.exit()").body[0])
+            // we need to wrap it in apply/lambda/return in case the programmer wants to do something insane like
+            // store the result of a function call.
+            return Apply(Seq(Lambda([Try([Return(node)], [UglifyJS.parse("window.Profiler.exit()").body[0], UglifyJS.parse("throw e").body[0]])], []), null), [])
         }
     }
 
     var transformer = new UglifyJS.TreeTransformer(beforeVisitor)
     
     return {
-        enter: function(ref) {
-            var call = {
-                name: ref,
-                children: [],
-                prev: currentCall,
-                startTime: date.getTime()
+        enter: function(name, ref) {
+            if(name != "window.root") {
+                var call = {
+                    name: name,
+                    children: [],
+                    prev: currentCall,
+                    startTime: date.getTime()
+                }
+                currentCall.children.push(call)
+                currentCall = call
             }
-            currentCall.children.push(call)
-            currentCall = call
         },
         exit: function() {
             currentCall.stopTime = date.getTime()
-            currentCall = currentCall.prev
+            // we can't exit from the root node
+            if(currentCall.prev)
+                currentCall = currentCall.prev
         },
         instrument: function(code) {
             var ast = UglifyJS.parse(code)

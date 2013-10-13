@@ -34,9 +34,16 @@ function Return(val) {
     return ret
 }
 
+function Seq(car, cdr) {
+    var seq = new UglifyJS.AST_Seq()
+    seq.car = car
+    seq.cdr = cdr
+    return seq
+}
+
 function Try(t, c) {
     var block = new UglifyJS.AST_Try()
-    block.body = [t]
+    block.body = t
     block.bcatch = Catch(c)
     console.log(block)
     return block
@@ -44,7 +51,7 @@ function Try(t, c) {
 
 function Catch(c) {
     var bcatch = new UglifyJS.AST_Catch()
-    bcatch.body = [c]
+    bcatch.body = c
     bcatch.argname = new UglifyJS.AST_SymbolCatch();
     bcatch.argname.name = "e"
     return bcatch
