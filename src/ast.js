@@ -45,7 +45,6 @@ function Try(t, c) {
     var block = new UglifyJS.AST_Try()
     block.body = t
     block.bcatch = Catch(c)
-    console.log(block)
     return block
 }
 

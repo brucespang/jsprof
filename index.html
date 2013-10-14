@@ -2,17 +2,64 @@
 <html>
   <head>
     <meta charset="utf-8" />
+
+    <title>JSProf</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link href="css/main.css" rel="stylesheet" media="screen" />
   </head>
   <body>
-    <h1>JSProf</h1>
+    <div class="navbar navbar-default">
+      <div class="navbar-header">
+        <h1><a class="navbar-brand" href="#">JSProf</a></h1>
+      </div>
+    </div>
 
-    <div id="visualizer"></div>
+    <div class="container">
+      <div id="src" class="col-md-6">
+        <h2>Javascript</h2>
+        <form role="form" id="src">
+          <div class="form-group">
+            <label for="sample">Sample Code</label>
+            <select class="form-control" id="sample">
+              <option value="/test/test.js">basic example</option>
+              <option value="/test/cam.js">camera</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="javascript-src">Source</label>
+            <textarea class="form-control" id="javascript-src" rows="20"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-default">Profile!</button>
+          <a href="/" class="pull-right text-danger">reset</a>
+        </form>
+      </div>
+
+      <div id="report" class="col-md-6">
+        <h2>Report</h2>
+        <ul id="nav">
+          <li><a class="btn btn-default btn-primary disabled" href="#tree">call tree</a></li>
+          <li><a class="btn btn-default" href="#funs">function stats</a></li>
+          <li><a class="btn btn-default" href="#paths">paths</a></li>
+        </ul>
+        <div class="clearfix"></div>
+
+        <div id="tree" class="section"></div>
+        <div id="funs" class="section"></div>
+        <div id="paths" class="section"></div>
+      </div>
+    </div>
 
     <script src="lib/jquery-2.0.3.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
     <script src="lib/uglify.js"></script>
     <script src="src/ast.js"></script>
     <script src="src/prof.js"></script>
-    <script src="src/app.js"></script>
     <script src="src/visualizer.js"></script>
+    <script src="src/app.js"></script>
   </body>
 </html>

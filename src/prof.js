@@ -8,19 +8,18 @@ function count_uniq(xs) {
     return counts
 }
 
-var Profiler = (function() {
+var Profiler = function() {
     var callgraph = {
         name: "root",
         startTime: Date.now(),
         children: []
     }
     var currentCall = callgraph
+    var counts = {}
+    
     var id = 0
 
     function beforeVisitor(node, descend) {
-        if(node instanceof UglifyJS.AST_Try)
-            console.log(node)
-        
         if(node instanceof UglifyJS.AST_Lambda || node instanceof UglifyJS.AST_Catch || node instanceof UglifyJS.AST_Finally) {
             // If we see a function, a catch block, or a finally block, we need to begin a
             // function. We do this for catch and finally blocks because we exit the current
@@ -36,8 +35,8 @@ var Profiler = (function() {
             else
                 var name = "window.root"
             
-            node.body.unshift(UglifyJS.parse("window.Profiler.enter('"+name+"', this)").body[0])
-            node.body.push(UglifyJS.parse("window.Profiler.exit()").body[0])
+            node.body.unshift(UglifyJS.parse("window.profiler.enter('"+name+"', this)").body[0])
+            node.body.push(UglifyJS.parse("window.profiler.exit()").body[0])
             
             node.start = node.body[0]
             node.end = node.body[node.body.length-1]
@@ -47,17 +46,17 @@ var Profiler = (function() {
             // we want to ensure that the last effective statement in every function
             // is Profiler.exit(). This code generates a block that replaces an exit value
             // in a way that guarantees that exit() is the last call in the function. e.g.:
-            //   return "a" -> return (function(){var res_1 = "a"; window.Profiler.exit(); res_1})()
+            //   return "a" -> return (function(){var res_1 = "a"; window.profiler.exit(); res_1})()
             //   return long_function() -> return (function(){
             //                                       var res_2 = long_function();
-            //                                       window.Profiler.exit();
+            //                                       window.profiler.exit();
             //                                       return res_1})()
             
             var name = Symbol("res_" + id)
             id += 1
 
             var assign = Assign(name, node.value)
-            var exit = UglifyJS.parse("window.Profiler.exit()").body[0]
+            var exit = UglifyJS.parse("window.profiler.exit()").body[0]
             
             node.value = Apply(Seq(Lambda([assign, exit, Return(name)], []), null), [])
             
@@ -70,7 +69,7 @@ var Profiler = (function() {
             // store the result of a function call.
             descend(node, this)
             
-            return Apply(Seq(Lambda([Try([Return(node)], [UglifyJS.parse("window.Profiler.exit()").body[0], UglifyJS.parse("throw e").body[0]])], []), null), [])
+            return Apply(Seq(Lambda([Try([Return(node)], [UglifyJS.parse("window.profiler.exit()").body[0], UglifyJS.parse("throw e").body[0]])], []), null), [])
         }
     }
 
@@ -99,6 +98,17 @@ var Profiler = (function() {
         return ns
     }
 
+    function node_times(node) {
+        var times = {}
+        times[node.name] = [node.stopTime - node.startTime]
+        for(var c in node.children) {
+            var child_times = node_times(node.children[c])
+            for(var n in child_times)
+                times[n] = $.merge(child_times[n], times[n] || [])
+        }
+        return times
+    }
+
     return {
         enter: function(name, ref) {
             if(name != "window.root") {
@@ -110,6 +120,9 @@ var Profiler = (function() {
                 }
                 currentCall.children.push(call)
                 currentCall = call
+                if(!counts[name])
+                    counts[name] = 0
+                counts[name]++
             }
         },
         exit: function() {
@@ -121,7 +134,6 @@ var Profiler = (function() {
         },
         instrument: function(code) {
             var ast = UglifyJS.parse(code)
-            console.log(ast)
             ast.transform(transformer)
             return ast.print_to_string({ beautify: true })
         },
@@ -131,10 +143,13 @@ var Profiler = (function() {
         paths: function() {
             return paths(callgraph)
         },
-        nodes: function() {
-            return nodes(callgraph)
+        counts: function() {
+            return counts
+        },
+        times: function() {
+            return node_times(callgraph)
         }
     }
-})()
+}
 
-window.Profiler = Profiler
+window.profiler = Profiler()

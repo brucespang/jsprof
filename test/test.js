@@ -33,5 +33,5 @@ try {
 }
 
 setInterval(function() {
-    fact(5000)
+    fact(100)
 }, 1000)

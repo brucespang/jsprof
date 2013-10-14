@@ -1,12 +1,17 @@
-function Visualizer(selector) {
+function TreeVisualizer(selector) {
     this.selector = selector
     this.el = $(this.selector)
     this.$ = function() {
         return this.el.children(arguments)
     }
+    this.lastStopTime = null
 }
 
-Visualizer.prototype.callgraph = function(callgraph) {
+TreeVisualizer.prototype.render = function(callgraph) {
+    if(callgraph.stopTime == this.lastStopTime)
+        return;
+    this.lastStopTime = callgraph.stopTime
+    
     $("#callgraph").remove()
     this.el.append('<ol id="callgraph"></ol>')
 
@@ -26,7 +31,37 @@ Visualizer.prototype.callgraph = function(callgraph) {
     addNode($("#callgraph"), callgraph, 0)
 }
 
-visualizer = new Visualizer("#visualizer")
-setInterval(function() {
-    visualizer.callgraph(Profiler.callgraph())
-}, 1000)
+function FunVisualizer(selector) {
+    this.selector = selector
+    this.el = $(this.selector)
+    this.$ = function() {
+        return this.el.children(arguments)
+    }
+}
+
+FunVisualizer.prototype.render = function(counts, times) {
+    $("#counts").remove()
+    this.el.append('<dl id="counts"></dl>')
+    for(var c in counts)
+        $("#counts").append("<dt>"+c+"</dt><dd>"+counts[c]+"</dd>")
+    
+    $("#times").remove()
+    this.el.append('<ol id="times"></ol>')
+}
+
+function PathVisualizer(selector) {
+    this.selector = selector
+    this.el = $(this.selector)
+    this.$ = function() {
+        return this.el.children(arguments)
+    }
+}
+
+PathVisualizer.prototype.render = function(paths) {
+    this.$("ul").remove()
+    this.el.append('<dl></dl>')
+    var path_counts = count_uniq(paths)
+    for(var p in path_counts) {
+        this.$("dl").append("<dt>"+p+"</dt><dd>"+path_counts[p]+"</dd>")
+    }
+}
