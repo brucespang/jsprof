@@ -1,12 +1,5 @@
-#report h2 {
-    display: inline-block;
-    float: left;
-}
-
 #nav {
-    display: inline-block;
-    float: left;
-    margin: 20px 0 0 10px;
+    padding-left: 0;
 }
 
 #nav li {

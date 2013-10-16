@@ -55,3 +55,10 @@ function Catch(c) {
     bcatch.argname.name = "e"
     return bcatch
 }
+
+function Dot(expr, prop) {
+    var dot = new UglifyJS.AST_Dot()
+    dot.expression = expr
+    dot.property = prop
+    return dot
+}

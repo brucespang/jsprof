@@ -11,15 +11,28 @@ setInterval(function() {
     if(!$("#funs").is(":visible"))
         return;
 
-    funs.render(window.profiler.counts(), window.profiler.times())
+    funs.render(window.profiler.node_stats())
 }, 250)
+
+function collapse(paths) {
+    return paths.map(function(path) {
+        return path.reduce(function(acc, node) {
+            if(acc.length > 0 && acc[acc.length-1][0] == node)
+                acc[acc.length-1][1] += 1
+            else
+                acc.push([node, 1])
+            return acc
+        }, [])
+    })
+}
 
 var paths = new PathVisualizer("#paths")
 setInterval(function() {
     if(!$("#paths").is(":visible"))
         return;
 
-    paths.render(window.profiler.paths())
+    var collapsed = collapse(window.profiler.paths())
+    paths.render(collapsed)
 }, 250)
 
 $("#nav a").click(function(e) {
@@ -30,16 +43,16 @@ $("#nav a").click(function(e) {
     $(this).addClass("disabled btn-primary")
     $("#report .section").hide()
     $(id).show()
-
 })
 
 $("#tree").show().toggleClass("active")
 $("#funs").hide()
 $("#paths").hide()
+$("#instrumented").hide()
 
 function loadScript(url) {
     $.get(url, function(){}, "html").then(function(code){
-        $("#javascript-src").text(code)
+        $("#javascript-src").val(code)
     }, function(err) {
         console.log("ERROR", err)
     })
@@ -56,9 +69,9 @@ loadScript($("#sample option:first").val())
 $("form#src").submit(function(e) {
     e.preventDefault()
     
-    var src = $("#javascript-src").text()
+    var src = $("#javascript-src").val()
     var code = window.profiler.instrument(src)
-    console.log(code)
+    $("#instrumented pre").text(code)
     eval(code)
 })
 
