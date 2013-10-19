@@ -24,7 +24,7 @@ var Profiler = function() {
             if(node.name)
                 var name = node.name.name
             else
-                var name = "[Anonymous] (line "+node.start.line+")"
+                var name = "[Anonymous]"
 
             node.body.unshift(parse("window.profiler.enter('"+name+"', "+node.start.line+")"))
             node.body.push(parse("window.profiler.exit()"))
@@ -109,11 +109,14 @@ var Profiler = function() {
     }
 
     function nodes(node) {
-        var ns = [node.name]
-        for(var c in node.children) {
-            var child_nodes = nodes(node.children[c])
-            $.merge(ns, child_nodes)
+        function acc(node, hash) {
+            hash[node.name] = node
+            for(var c in node.children)
+                acc(node.children[c], hash)
         }
+        
+        var ns = {}
+        acc(node, ns)
         return ns
     }
 
@@ -167,13 +170,15 @@ var Profiler = function() {
         node_stats: function() {
             var times = node_times(callgraph)
             var acc = []
-            for(var node in times) {
-                var t = times[node].sort()
-                var avg = t.reduce(function(x,y) {return x+y}, 0)/t.length
-                var p90 = t[Math.ceil(90/100 * t.length)-1]
-                var p99 = t[Math.ceil(99/100 * t.length)-1]
-                acc.push({name: node,
-                          count: t.length,
+            for(var name in times) {
+                var ts = times[name].sort()
+                var node = nodes(callgraph)[name]
+                var avg = ts.reduce(function(x,y) {return x+y}, 0)/ts.length
+                var p90 = ts[Math.ceil(90/100 * ts.length)-1]
+                var p99 = ts[Math.ceil(99/100 * ts.length)-1]
+                acc.push({node: node,
+                          times: ts,
+                          count: ts.length,
                           avg: avg,
                           p90: p90,
                           p99: p99})

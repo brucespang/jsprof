@@ -1,3 +1,14 @@
+String.prototype.hashCode = function(){
+    var hash = 0, i, char;
+    if (this.length == 0) return hash;
+    for (i = 0, l = this.length; i < l; i++) {
+        char  = this.charCodeAt(i);
+        hash  = ((hash<<5)-hash)+char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+};
+
 function TreeVisualizer(selector) {
     this.selector = selector
     this.el = $(this.selector)
@@ -14,7 +25,8 @@ TreeVisualizer.prototype.updateNode = function(graph, node) {
     var el = graph.find("#node-"+node.id)
     el.find(".time").text('('+ (node.stopTime - node.startTime)+' ms)')
     for(var c in node.children)
-        this.updateNode(el.children("ol"), node.children[c])
+        if(el.children("ol"))
+            this.updateNode(el.children("ol"), node.children[c])
 }
 
 TreeVisualizer.prototype.addNode = function(graph, node) {
@@ -24,13 +36,20 @@ TreeVisualizer.prototype.addNode = function(graph, node) {
         p.append("<a href='#'>"+node.name+"</a>")
     else
         p.append(node.name)
+    p.append('<a href="#'+node.line+'" class="line-link">(line '+node.line+')</a>')
     p.append(' <span class="time"></span>')
 
-    var children = $("<ol></ol>").appendTo(li)
-    children.hide()
 
+    var self = this
     li.find("a").click(function() {
-        children.toggle()
+        if(li.children("ol").length == 0) {
+            var children = $("<ol></ol>").appendTo(li)
+            for(var c in node.children) {
+                self.updateNode(children, node.children[c])
+            }
+        } else {
+            li.children("ol").toggle()
+        }
     })
 }
 
@@ -40,6 +59,7 @@ TreeVisualizer.prototype.render = function(callgraph) {
     this.lastStopTime = callgraph.stopTime
 
     this.updateNode($("#callgraph"), callgraph)
+    $("#node-0 p a:first").trigger('click')
 }
 
 TreeVisualizer.prototype.reset = function() {
@@ -54,15 +74,35 @@ function FunVisualizer(selector) {
     }
 }
 
+FunVisualizer.prototype.reset = function() {
+    this.el.find('ul').remove()
+}
+
 FunVisualizer.prototype.render = function(nodes) {
-    this.$("ul").remove()
-    this.el.append('<ul></ul>')
+    if(this.el.find('ul').length == 0)
+        this.el.append('<ul></ul>')
+
     nodes = nodes.sort(function(x,y) { return x.count - y.count }).reverse()
     for(var n in nodes) {
-        var node = nodes[n]
-        var li = $("<li></li>").appendTo(this.$("ul"))
+        var stats = nodes[n]
+        var node = stats.node
+
+        var name = node.name.hashCode()
+
+        $("#fun-node-"+name).remove()
+
+        var li = $("<li id='fun-node-"+name+"'></li>").appendTo(this.el.find("ul"))
         li.append("<strong>" + node.name + "</strong>")
-        li.append("<dl><dt>Count:</dt><dd>"+node.count+"</dd><dt>Average:</dt><dd>"+ node.avg.toFixed(3) +"</dd><dt>90th Percentile:</dt><dd>"+ node.p90 +"</dd><dt>99th Percentile:</dt><dd>"+ node.p99 +"</dd></dl>")
+        li.append("<a class='line-link' href='#"+node.line+"'>line "+node.line+"</a></dd>")
+
+        var dl = $("<dl></dl>").appendTo(li)
+        dl.append("<dt>count</dt><dd>"+stats.count+"</dd>")
+        dl.append("<dt>latency graph</dt><dd class='graph'><span></span></dd>")
+        dl.append("<dt>average latency</dt><dd>"+ stats.avg.toFixed(3) +" ms</dd>")
+        dl.append("<dt>90th percentile</dt><dd>"+ stats.p90 +" ms</dd>")
+        dl.append("<dt>99th percentile</dt><dd>"+ stats.p99 +" ms</dd>")
+        
+        dl.find(".graph span").sparkline(stats.times, {type: 'box'})
     }
 }
 

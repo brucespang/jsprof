@@ -5,3 +5,18 @@
 #nav li {
     display: inline-block;
 }
+
+textarea {
+  display: block;
+  width: 100%;
+  padding: 6px 12px 0 12px;
+  font-size: 14px;
+  line-height: 1.428571429;
+  color: #555555;
+  vertical-align: middle;
+  background-color: #ffffff;
+}
+
+.line-link {
+    margin-left: 4px;
+}

@@ -1,0 +1,72 @@
+/**
+ * jQuery Lined Textarea Plugin
+ *   http://alan.blog-city.com/jquerylinedtextarea.htm
+ *
+ * Copyright (c) 2010 Alan Williamson
+ *
+ * Released under the MIT License:
+ * http://www.opensource.org/licenses/mit-license.php
+ *
+ * Usage:
+ *   Displays a line number count column to the left of the textarea
+ *
+ *   Class up your textarea with a given class, or target it directly
+ *   with JQuery Selectors
+ *
+ *   $(".lined").linedtextarea({
+ *   	selectedLine: 10,
+ *    selectedClass: 'lineselect'
+ *   });
+ *
+ */
+
+.linedwrap {
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    -webkit-transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+}
+
+.linedtextarea textarea {
+    margin-top: 4px;
+}
+
+.linedtextarea textarea, .linedwrap .codelines .lineno {
+	  font-size: 14px;
+	  font-family: monospace;
+	  line-height: normal !important;
+}
+
+.linedtextarea textarea {
+	  padding-right:0.3em;
+	  padding-top: 0.3em;
+	  border: 0;
+}
+
+.linedwrap .lines {
+	  margin-top: 0px;
+	  width: 50px;
+	  float: left;
+	  overflow: hidden;
+	  border-right: 1px solid #c0c0c0;
+	  margin-right: 8px;
+}
+
+.linedwrap .codelines {
+	  padding-top: 8px;
+}
+
+.linedwrap .codelines .lineno {
+	  color:#AAAAAA;
+	  padding-right: 0.5em;
+	  padding-top: 0.0em;
+	  text-align: right;
+	  white-space: nowrap;
+}
+
+.linedwrap .codelines .lineselect {
+    color: #fff;
+	  background: #c9302c;
+}

@@ -66,12 +66,24 @@ $("#sample").change(function() {
 })
 loadScript($("#sample option:first").val())
 
+$("form#src textarea").linedtextarea()
+$("body").delegate('a.line-link', 'click', function(e){
+    e.preventDefault();
+    
+    var linenum = $(this).attr("href").replace("#", "")
+    $("form#src .lineselect").removeClass("lineselect")
+    $("form#src .lineno-"+linenum).addClass("lineselect")
+})
+
 $("form#src").submit(function(e) {
     e.preventDefault()
     
     var src = $("#javascript-src").val()
+
     window.profiler = Profiler()
     tree.reset()
+    funs.reset()
+    
     var code = window.profiler.instrument(src)
     $("#instrumented pre").removeClass("prettyprinted")
     $("#instrumented pre").text(code)

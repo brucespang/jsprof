@@ -7,5 +7,8 @@ function fib(n) {
         return fib(n-1) + fib(n-2)
 }
 
-for(var i = 0; i < 10; i++)
-    fib(i)
+for(var i = 0; i < 20; i++) {
+    (function() {
+        fib(i)
+    })()
+}
