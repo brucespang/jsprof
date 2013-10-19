@@ -10,6 +10,7 @@ textarea {
   display: block;
   width: 100%;
   padding: 6px 12px 0 12px;
+  float: left;
   font-size: 14px;
   line-height: 1.428571429;
   color: #555555;
@@ -19,4 +20,18 @@ textarea {
 
 .line-link {
     margin-left: 4px;
+}
+
+.form-controls {
+    margin-top: 20px;
+}
+
+#footer {
+    margin-top: 40px;
+    text-align: center;
+}
+
+#footer a, #footer a:visited {
+    color: #999999;
+    text-decoration: underline;
 }
