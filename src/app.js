@@ -70,7 +70,7 @@ $("#sample").change(function() {
 $("form#src textarea").linedtextarea()
 $("body").delegate('a.line-link', 'click', function(e){
     e.preventDefault();
-    
+
     var linenum = $(this).attr("href").replace("#", "")
     $("form#src .lineselect").removeClass("lineselect")
     $("form#src .lineno-"+linenum).addClass("lineselect")

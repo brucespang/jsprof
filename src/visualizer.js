@@ -59,7 +59,8 @@ TreeVisualizer.prototype.render = function(callgraph) {
     this.lastStopTime = callgraph.stopTime
 
     this.updateNode($("#callgraph"), callgraph)
-    $("#node-0 p a:first").trigger('click')
+    if($("#node-0 ol").length == 0)
+        $("#node-0 p a:first").trigger('click')
 }
 
 TreeVisualizer.prototype.reset = function() {
