@@ -1,3 +1,11 @@
+function clickLineLink(e){
+    e.preventDefault();
+
+    var linenum = $(this).attr("href").replace("#", "")
+    $("form#src .lineselect").removeClass("lineselect")
+    $("form#src .lineno-"+linenum).addClass("lineselect")
+}
+
 String.prototype.hashCode = function(){
     var hash = 0, i, char;
     if (this.length == 0) return hash;
@@ -39,6 +47,7 @@ TreeVisualizer.prototype.addNode = function(graph, node) {
     p.append('<a href="#'+node.line+'" class="line-link">(line '+node.line+')</a>')
     p.append(' <span class="time"></span>')
 
+    p.children('.line-link').on('click', clickLineLink)
 
     var self = this
     li.find("a.node-name").click(function() {
@@ -95,6 +104,7 @@ FunVisualizer.prototype.render = function(nodes) {
         var li = $("<li id='fun-node-"+name+"'></li>").appendTo(this.el.find("ul"))
         li.append("<strong>" + node.name + "</strong>")
         li.append("<a class='line-link' href='#"+node.line+"'>line "+node.line+"</a></dd>")
+        li.children(".line-link").on('click', clickLineLink)
 
         var dl = $("<dl></dl>").appendTo(li)
         dl.append("<dt>count</dt><dd>"+stats.count+"</dd>")
