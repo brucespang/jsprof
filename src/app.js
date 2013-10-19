@@ -50,9 +50,11 @@ $("#funs").hide()
 $("#paths").hide()
 $("#instrumented").hide()
 
-function loadScript(url) {
+function loadScript(url, cb) {
     $.get(url, function(){}, "html").then(function(code){
         $("#javascript-src").val(code)
+        if(cb)
+            cb()
     }, function(err) {
         console.log("ERROR", err)
     })
@@ -64,7 +66,6 @@ $("#sample").change(function() {
         return
    loadScript(url)
 })
-loadScript($("#sample option:first").val())
 
 $("form#src textarea").linedtextarea()
 $("body").delegate('a.line-link', 'click', function(e){
@@ -89,5 +90,9 @@ $("form#src").submit(function(e) {
     $("#instrumented pre").text(code)
     prettyPrint()
     eval(code)
+})
+
+loadScript($("#sample option:first").val(), function() {
+    $("form#src").trigger("submit")    
 })
 
