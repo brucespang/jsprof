@@ -1,6 +1,8 @@
 var Profiler = function() {
     var callgraph = {
         name: "root",
+        id: 0,
+        line: 1,
         startTime: Date.now(),
         children: []
     }
@@ -9,6 +11,7 @@ var Profiler = function() {
     var counts = {}
 
     var id = 0
+    var node_id = 1
 
     function parse(code) {
         return UglifyJS.parse(code).body[0]
@@ -21,9 +24,9 @@ var Profiler = function() {
             if(node.name)
                 var name = node.name.name
             else
-                var name = "[Anonymous]"
+                var name = "[Anonymous] (line "+node.start.line+")"
 
-            node.body.unshift(parse("window.profiler.enter('"+name+"', this)"))
+            node.body.unshift(parse("window.profiler.enter('"+name+"', "+node.start.line+")"))
             node.body.push(parse("window.profiler.exit()"))
 
             node.start = node.body[0]
@@ -126,13 +129,16 @@ var Profiler = function() {
     }
 
     return {
-        enter: function(name, ref) {
+        enter: function(name, line) {
             var call = {
                 name: name,
+                id: id,
+                line: line,
                 children: [],
                 prev: currentCall,
                 startTime: Date.now()
             }
+            id++
             currentCall.children.push(call)
             currentCall = call
             if(!counts[name])

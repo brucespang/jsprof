@@ -7,28 +7,43 @@ function TreeVisualizer(selector) {
     this.lastStopTime = null
 }
 
+TreeVisualizer.prototype.updateNode = function(graph, node) {
+    if(graph.find("#node-"+node.id).length == 0)
+        this.addNode(graph, node)
+    
+    var el = graph.find("#node-"+node.id)
+    el.find(".time").text('('+ (node.stopTime - node.startTime)+' ms)')
+    for(var c in node.children)
+        this.updateNode(el.children("ol"), node.children[c])
+}
+
+TreeVisualizer.prototype.addNode = function(graph, node) {
+    var li = $('<li id="node-'+node.id+'"></li>').appendTo(graph)
+    var p = $('<p></p>').appendTo(li)
+    if(node.children.length > 0)
+        p.append("<a href='#'>"+node.name+"</a>")
+    else
+        p.append(node.name)
+    p.append(' <span class="time"></span>')
+
+    var children = $("<ol></ol>").appendTo(li)
+    children.hide()
+
+    li.find("a").click(function() {
+        children.toggle()
+    })
+}
+
 TreeVisualizer.prototype.render = function(callgraph) {
     if(callgraph.stopTime == this.lastStopTime)
         return;
     this.lastStopTime = callgraph.stopTime
-    
-    $("#callgraph").remove()
-    this.el.append('<ol id="callgraph"></ol>')
 
-    function addNode(graph, node, depth) {
-        if(depth > 10) {
-            $("<li><p>...</p></li>").appendTo(graph)
-            return
-        }
-        
-        var li = $("<li></li>").appendTo(graph)
-        li.append("<p>"+node.name+" ("+ (node.stopTime - node.startTime)+" ms)</p>")
-        var children = $("<ol></ol>").appendTo(li)
-        for(var c in node.children)
-            addNode(children, node.children[c], depth + 1)
-    }
-    
-    addNode($("#callgraph"), callgraph, 0)
+    this.updateNode($("#callgraph"), callgraph)
+}
+
+TreeVisualizer.prototype.reset = function() {
+    $("#callgraph").html('')
 }
 
 function FunVisualizer(selector) {

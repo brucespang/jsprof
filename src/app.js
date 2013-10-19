@@ -70,8 +70,12 @@ $("form#src").submit(function(e) {
     e.preventDefault()
     
     var src = $("#javascript-src").val()
+    window.profiler = Profiler()
+    tree.reset()
     var code = window.profiler.instrument(src)
+    $("#instrumented pre").removeClass("prettyprinted")
     $("#instrumented pre").text(code)
+    prettyPrint()
     eval(code)
 })
 
