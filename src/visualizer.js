@@ -33,7 +33,7 @@ TreeVisualizer.prototype.addNode = function(graph, node) {
     var li = $('<li id="node-'+node.id+'"></li>').appendTo(graph)
     var p = $('<p></p>').appendTo(li)
     if(node.children.length > 0)
-        p.append("<a href='#'>"+node.name+"</a>")
+        p.append("<a class='node-name' href='#'>"+node.name+"</a>")
     else
         p.append(node.name)
     p.append('<a href="#'+node.line+'" class="line-link">(line '+node.line+')</a>')
@@ -41,7 +41,7 @@ TreeVisualizer.prototype.addNode = function(graph, node) {
 
 
     var self = this
-    li.find("a").click(function() {
+    li.find("a.node-name").click(function() {
         if(li.children("ol").length == 0) {
             var children = $("<ol></ol>").appendTo(li)
             for(var c in node.children) {
