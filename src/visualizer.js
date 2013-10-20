@@ -2,8 +2,7 @@ function clickLineLink(e){
     e.preventDefault();
 
     var linenum = $(this).attr("href").replace("#", "")
-    $("form#src .lineselect").removeClass("lineselect")
-    $("form#src .lineno-"+linenum).addClass("lineselect")
+    $("form#src textarea").linedtextarea_select(linenum)
 }
 
 String.prototype.hashCode = function(){
