@@ -2,3 +2,11 @@
 \#*\#
 .\#*
 node_modules
+report.aux
+report.bbl
+report.blg
+report.dvi
+report.log
+report.out
+report.tex.bbl
+report.tex.blg

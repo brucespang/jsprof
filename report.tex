@@ -1,0 +1,63 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{mathtools}
+\usepackage{cite}
+\usepackage[ruled,vlined]{algorithm2e}
+\renewcommand{\arraystretch}{2}
+
+\begin{document}
+
+\title{Project 1: JSProf}
+\author{Bruce Spang}
+\maketitle
+
+\section*{Approach}
+
+My general approach for the system was to break it into two parts: a profiler and a reporter. The profiler instruments a user supplied program so that it can maintain an accurate call graph while executing. The reporter manipulates the call graph to figure out information about how the program executes.
+
+Instrumenting the program source was the trickiest part of the project. Once I had an accurate call graph, reporting just involved a lot of iterating over the callgraph and manipulating the DOM.
+
+I used UglifyJS \cite{uglify} to parse and transform the AST, and wrote the instrumentation logic by hand. There were two ways to do this: I could have inserted profiling calls in function definitions or inserted profiling calls at every call site. Call-site profiling is simple and would allows the system to profile calls to other libraries. Unfortunately, it doesn't work when instrumented callbacks are executed by non-instrumented libraries (e.g. setInterval, jquery). This results in calls in a callback being embedded in unexpected nodes in the callgraph, which is confusing. Because javascript libraries love accepting callbacks, I decided to do definition site instrumentation.
+
+\section*{System Design}
+
+JSProf is divided into two main components: a profiler and a reporter. The profiler consists of a program instrumentor and a runtime statistics collector. The reporter consists of a set of functions to extract statistics from the call graph, and a front-end for visualization.
+
+\subsection*{Profiler}
+
+\textit{See src/prof.js}
+
+The profiler uses UglifyJS \cite{uglify} to instrument the AST with \texttt{enter()} and \texttt{exit()} calls. At runtime, the \texttt{enter} and \texttt{exit} calls update a linked data structure that represents the program's call graph. Every node of this data structure corresponds to a stack frame in the program execution, and includes all child function calls and timing details.
+
+The instrumentor traverses the AST and inserts instrumentation calls. If it sees a function definition, it inserts \texttt{enter} at the beginning of the body and \texttt{exit} at the end of the body. If it sees an exit node (either a \texttt{return} or a \texttt{throw}), it inserts an \texttt{exit} call.
+
+There are a few subtle parts of the instrumentor. The system can't just insert an exit call before all return statements, because they may have lots of computation (e.g. \texttt{return reallyLongFunction()}). It also needs to properly handle exceptions.
+
+To avoid the issue with return statements, the system stores the result of the return expression in a new variable, inserts an exit call, and then returns the new variable. It wraps all this in an immediately evaluated anonymous function so that the new variable doesn't override some other program variable.
+
+Handling exceptions properly is tricky, since program flow can jump any number of levels up the stack. To deal with them, the system wraps all function calls in a try/catch block. When the program throws an exception, each try/catch block calls \texttt{exit} before propagating the exception up the stack. Once the program flow hits a catch block in the original program, the system re-enters the current function and continues executing.
+
+\subsection*{Reporter}
+
+\textit{See src/app.js, src/visualizer.js}
+
+The profiler sytem includes a reporter that visualizes the program execution. Every 250ms, it traverses the callgraph and updates a callgraph visualization, a set of statistics about each function, and information about hot paths.
+
+While traversing the entire callgraph every 250ms could be slow for very large programs, it seemed fast enough in my testing. The main advantage to this method is that it's very flexible: it is possible to extract new statistics from the call graph without modifying the runtime system. If speed was an issue with large programs, it would be better to compute all the necessary statistics at runtime (e.g. every time a function is called, increment the frequency). 
+
+\section*{Results}
+
+This design seems very good for small javascript programs. It is functional, fast, and the visualizations are useful. While developing the system, I was able to find bugs in the instrumentation logic by examining the call graph and bugs in the timing logic by examining the timing reports. Being able to see a live visualization of program behavior, and being able to update that behavior on the fly is nice for development.
+
+If this system was going to be used primarily for larger javascript applications, I would have made different design decisions. I probably would either have written a node.js script to instrument the code statically, or modify a script loader to instrument libraries automatically. I would have written the visualization component as a javascript program that writes to an overlay, so that it could be embedded into existing websites. However, because of the way the system is factored, none of these changes would involve significant code modifications.
+
+It is annoying that the profiler cannot instrument library functions. It may be possible to combine call-site and definition-site instrumentation in order to profile them. I'm not sure how to do that correctly without generating massive amounts of code.
+
+\bibliography{report}{}
+\nocite{*}
+\bibliographystyle{plain}
+
+\end{document}
