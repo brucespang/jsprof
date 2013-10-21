@@ -56,7 +56,7 @@ var Profiler = function() {
             //                                       return res_2})()
             descend(node, this)
 
-            var name = Symbol("res_" + id)
+            var name = Symbol("profiler_res_" + id)
             id += 1
 
             node.value = doLambda([Assign(name, node.value),
