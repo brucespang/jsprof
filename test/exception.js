@@ -22,6 +22,14 @@ try {
 } catch(e) {
     console.log("caught", e)
     spin(3)
+} finally {
+    spin(4)
+}
+
+try {
+    console.log("ok")
+} finally {
+    spin(4)
 }
 
 setInterval(function() {

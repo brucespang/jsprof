@@ -62,3 +62,9 @@ function Dot(expr, prop) {
     dot.property = prop
     return dot
 }
+
+function Block(body) {
+    var block = new UglifyJS.AST_BlockStatement()
+    block.body = body
+    return block
+}

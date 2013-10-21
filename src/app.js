@@ -50,7 +50,9 @@ $("#funs").hide()
 $("#paths").hide()
 $("#instrumented").hide()
 
-function loadScript(url, cb) {
+function loadScript(path, cb) {
+    var url = path + "?" + Date.now()
+    console.log(url)
     $.get(url, function(){}, "html").then(function(code){
         $("#javascript-src").val(code)
         if(cb)

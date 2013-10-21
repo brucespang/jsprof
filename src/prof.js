@@ -8,7 +8,6 @@ var Profiler = function() {
     }
     callgraph.prev = {children: [callgraph]}
     var currentCall = callgraph
-    var counts = {}
 
     var id = 0
     var node_id = 1
@@ -16,11 +15,18 @@ var Profiler = function() {
     function parse(code) {
         return UglifyJS.parse(code).body[0]
     }
-    
+
+    function doLambda(exprs) {
+        return Apply(Dot(Seq(Lambda(exprs, []),
+                             null),
+                         "call"),
+                     [parse("this").body])
+    }
+
     function beforeVisitor(node, descend) {
         if(node instanceof UglifyJS.AST_Lambda) {
             descend(node, this)
-            
+
             if(node.name)
                 var name = node.name.name
             else
@@ -47,17 +53,13 @@ var Profiler = function() {
             //                                       window.profiler.exit();
             //                                       return res_2})()
             descend(node, this)
-            
+
             var name = Symbol("res_" + id)
             id += 1
 
-            node.value = Apply(Dot(Seq(Lambda([Assign(name, node.value),
-                                               parse("window.profiler.exit()"),
-                                               Return(name)],
-                                              []),
-                                      null),
-                                  "call"),
-                              [parse("this").body])
+            node.value = doLambda([Assign(name, node.value),
+                                   parse("window.profiler.exit()"),
+                                   Return(name)])
 
             return node
         } else if(node instanceof UglifyJS.AST_Call) {
@@ -69,15 +71,19 @@ var Profiler = function() {
             // function call.
             descend(node, this)
 
-            var apply =  Apply(Dot(Seq(Lambda([Try([Return(node)],
-                                                   [parse("window.profiler.exit()"),
-                                                    parse("throw e")])],
-                                              []),
-                                       null),
-                                   "call"),
-                               [parse("this").body])
+            return doLambda([Try([Return(node)],
+                                 [parse("window.profiler.exit()"),
+                                  parse("throw e")])])
+        } else if(node instanceof UglifyJS.AST_Try) {
+            descend(node, this)
             
-            return apply
+            // we want to re-enter previous function after a try/catch block.
+            // we exit the current function after a try block so that we don't
+            // enter the wrong block if no exception is thrown
+
+            node.body.push(parse("window.profiler.exit()"))
+            
+            return Block([node, parse("window.profiler.reenter()")])
         } else if(node instanceof UglifyJS.AST_Catch || node instanceof UglifyJS.AST_Finally) {
             // We add enter handlers this for catch and finally blocks because
             // we exit the current function when we see a throw or catch an
@@ -85,8 +91,11 @@ var Profiler = function() {
             // properly.
             descend(node, this)
 
-            node.body.unshift(parse("window.profiler.catch()"))
+            node.body.unshift(parse("window.profiler.reenter()"))
+            node.body.push(parse("window.profiler.exit()"))
+
             node.start = node.body[0]
+            node.end = node.body[node.body.length-1]
 
             return node
         }
@@ -114,7 +123,7 @@ var Profiler = function() {
             for(var c in node.children)
                 acc(node.children[c], hash)
         }
-        
+
         var ns = {}
         acc(node, ns)
         return ns
@@ -144,11 +153,8 @@ var Profiler = function() {
             id++
             currentCall.children.push(call)
             currentCall = call
-            if(!counts[name])
-                counts[name] = 0
-            counts[name]++
         },
-        catch: function() {
+        reenter: function() {
             currentCall = currentCall.children[currentCall.children.length - 1]
         },
         exit: function() {
