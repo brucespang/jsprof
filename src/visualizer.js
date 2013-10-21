@@ -43,7 +43,14 @@ TreeVisualizer.prototype.addNode = function(graph, node) {
         p.append("<a class='node-name' href='#'>"+node.name+"</a>")
     else
         p.append(node.name)
-    p.append('<a href="#'+node.line+'" class="line-link">(line '+node.line+')</a>')
+
+    if(node.name != "root") {
+        p.append(' (')
+        p.append('<a href="#'+node.sourceLine+'" class="line-link">source</a>')
+        p.append(', ')
+        p.append('<a href="#'+node.defLine+'" class="line-link">def</a>')
+        p.append(')')
+    }
     p.append(' <span class="time"></span>')
 
     p.children('.line-link').on('click', clickLineLink)
@@ -102,7 +109,8 @@ FunVisualizer.prototype.render = function(nodes) {
 
         var li = $("<li id='fun-node-"+name+"'></li>").appendTo(this.el.find("ul"))
         li.append("<strong>" + node.name + "</strong>")
-        li.append("<a class='line-link' href='#"+node.line+"'>line "+node.line+"</a></dd>")
+        if(node.name != "root")
+            li.append(" <a class='line-link' href='#"+node.defLine+"'>definition</a></dd>")
         li.children(".line-link").on('click', clickLineLink)
 
         var dl = $("<dl></dl>").appendTo(li)

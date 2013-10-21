@@ -2,7 +2,8 @@ var Profiler = function() {
     var callgraph = {
         name: "root",
         id: 0,
-        line: 1,
+        sourceLine: -1,
+        defLine: -1,
         startTime: Date.now(),
         children: []
     }
@@ -11,6 +12,7 @@ var Profiler = function() {
 
     var id = 0
     var node_id = 1
+    var sourceLine = null
 
     function parse(code) {
         return UglifyJS.parse(code).body[0]
@@ -71,7 +73,8 @@ var Profiler = function() {
             // function call.
             descend(node, this)
 
-            return doLambda([Try([Return(node)],
+            return doLambda([Try([parse("window.profiler.sourceLine("+node.start.line+")"),
+                                  Return(node)],
                                  [parse("window.profiler.exit()"),
                                   parse("throw e")])])
         } else if(node instanceof UglifyJS.AST_Try) {
@@ -142,10 +145,14 @@ var Profiler = function() {
 
     return {
         enter: function(name, line) {
+            if(!sourceLine)
+                sourceLine = line
+            
             var call = {
                 name: name,
                 id: id,
-                line: line,
+                sourceLine: sourceLine,
+                defLine: line,
                 children: [],
                 prev: currentCall,
                 startTime: Date.now()
@@ -153,6 +160,8 @@ var Profiler = function() {
             id++
             currentCall.children.push(call)
             currentCall = call
+            
+            sourceLine = null
         },
         reenter: function() {
             currentCall = currentCall.children[currentCall.children.length - 1]
@@ -161,6 +170,9 @@ var Profiler = function() {
             currentCall.stopTime = Date.now()
             callgraph.stopTime = currentCall.stopTime
             currentCall = currentCall.prev
+        },
+        sourceLine: function(line) {
+            sourceLine = line
         },
         instrument: function(code) {
             var ast = UglifyJS.parse(code)
