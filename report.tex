@@ -16,11 +16,11 @@
 
 \section*{Approach}
 
-My general approach for the system was to break it into two parts: a profiler and a reporter. The profiler instruments a user supplied program so that it can maintain an accurate call graph while executing. The reporter manipulates the call graph to figure out information about how the program executes.
+This javascript profiler is broken two parts: a program profiler and a statistics reporter. The profiler instruments a user-supplied program in order to maintain an accurate call graph while the program executes. The reporter manipulates the call graph to figure out information about how the program executes.
 
-Instrumenting the program source was the trickiest part of the project. Once I had an accurate call graph, reporting just involved a lot of iterating over the callgraph and manipulating the DOM.
+Instrumenting the program source was the trickiest part of the project. Once I had an accurate call graph, reporting just involved a lot of iterating over the call graph and manipulating the DOM.
 
-I used UglifyJS \cite{uglify} to parse and transform the AST, and wrote the instrumentation logic by hand. There were two ways to do this: I could have inserted profiling calls in function definitions or inserted profiling calls at every call site. Call-site profiling is simple and would allows the system to profile calls to other libraries. Unfortunately, it doesn't work when instrumented callbacks are executed by non-instrumented libraries (e.g. setInterval, jquery). This results in calls in a callback being embedded in unexpected nodes in the callgraph, which is confusing. Because javascript libraries love accepting callbacks, I decided to do definition site instrumentation.
+I used UglifyJS \cite{uglify} to parse and transform the AST, and wrote the instrumentation logic by hand. There were two ways to do this: I could have either inserted profiling calls in function definitions, or inserted profiling calls at every call site. Call-site profiling is simple and would allows the system to profile calls to other libraries. Unfortunately, it doesn't work when instrumented callbacks are executed by non-instrumented libraries (e.g. setInterval). This results in calls in a callback being embedded in unexpected nodes in the call graph, which is confusing. Because javascript libraries love callbacks, I decided to implement definition-site instrumentation instead.
 
 \section*{System Design}
 
@@ -30,7 +30,7 @@ JSProf is divided into two main components: a profiler and a reporter. The profi
 
 \textit{See src/prof.js}
 
-The profiler uses UglifyJS \cite{uglify} to instrument the AST with \texttt{enter()} and \texttt{exit()} calls. At runtime, the \texttt{enter} and \texttt{exit} calls update a linked data structure that represents the program's call graph. Every node of this data structure corresponds to a stack frame in the program execution, and includes all child function calls and timing details.
+The profiler uses UglifyJS \cite{uglify} to instrument the AST with \texttt{enter()} and \texttt{exit()} calls. At runtime, the \texttt{enter} and \texttt{exit} calls update a linked data structure that represents the program's call graph. Every node of this data structure corresponds to a stack frame in the program execution, and includes timing details and all calls to child functions.
 
 The instrumentor traverses the AST and inserts instrumentation calls. If it sees a function definition, it inserts \texttt{enter} at the beginning of the body and \texttt{exit} at the end of the body. If it sees an exit node (either a \texttt{return} or a \texttt{throw}), it inserts an \texttt{exit} call.
 
@@ -44,15 +44,15 @@ Handling exceptions properly is tricky, since program flow can jump any number o
 
 \textit{See src/app.js, src/visualizer.js}
 
-The profiler sytem includes a reporter that visualizes the program execution. Every 250ms, it traverses the callgraph and updates a callgraph visualization, a set of statistics about each function, and information about hot paths.
+The profiler system includes a reporter that visualizes the program execution. Every 250ms, it traverses the call graph and updates a call graph visualization, a set of statistics about each function, and information about hot paths.
 
-While traversing the entire callgraph every 250ms could be slow for very large programs, it seemed fast enough in my testing. The main advantage to this method is that it's very flexible: it is possible to extract new statistics from the call graph without modifying the runtime system. If speed was an issue with large programs, it would be better to compute all the necessary statistics at runtime (e.g. every time a function is called, increment the frequency). 
+The main advantage to this method is that it's very flexible: it is possible to extract new statistics from the call graph without modifying the runtime system. While traversing the entire call graph every 250ms could be slow for very large programs, it seemed fast enough in my testing. If reporter speed was an issue, it may be better to compute all the necessary statistics at runtime (e.g. every time a function is called, increment the frequency). 
 
 \section*{Results}
 
-This design seems very good for small javascript programs. It is functional, fast, and the visualizations are useful. While developing the system, I was able to find bugs in the instrumentation logic by examining the call graph and bugs in the timing logic by examining the timing reports. Being able to see a live visualization of program behavior, and being able to update that behavior on the fly is nice for development.
+This design seems very good for small javascript programs. It is functional, fast, and the visualizations are useable. While developing the system, I was able to find bugs in the instrumentation logic by examining the call graph and bugs in the timing logic by examining the timing reports. Being able to see a live visualization of program behavior, and being able to update that behavior on the fly is very useful for development.
 
-If this system was going to be used primarily for larger javascript applications, I would have made different design decisions. I probably would either have written a node.js script to instrument the code statically, or modify a script loader to instrument libraries automatically. I would have written the visualization component as a javascript program that writes to an overlay, so that it could be embedded into existing websites. However, because of the way the system is factored, none of these changes would involve significant code modifications.
+If this system was going to be used primarily for larger javascript applications, I would have made different design decisions. I probably would either have written a node.js script to instrument the code statically, or modify a script loader to instrument libraries automatically. I would have made the visualization component write to an overlay, so that it could be embedded onto existing websites. Fortunately, none of these changes would involve significant code modifications.
 
 It is annoying that the profiler cannot instrument library functions. It may be possible to combine call-site and definition-site instrumentation in order to profile them. I'm not sure how to do that correctly without generating massive amounts of code.
 
