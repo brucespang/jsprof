@@ -16,7 +16,7 @@
 
 \section*{Approach}
 
-This javascript profiler is broken two parts: a program profiler and a statistics reporter. The profiler instruments a user-supplied program in order to maintain an accurate call graph while the program executes. The reporter manipulates the call graph to figure out information about how the program executes.
+JSProf is divided into two main components: a program profiler and a statistics reporter. The profiler instruments a user-supplied program in order to maintain an accurate call graph while the program executes. The reporter manipulates the call graph to figure out information about how the program executes.
 
 Instrumenting the program source was the trickiest part of the project. Once I had an accurate call graph, reporting just involved a lot of iterating over the call graph and manipulating the DOM.
 
@@ -24,7 +24,7 @@ I used UglifyJS \cite{uglify} to parse and transform the AST, and wrote the inst
 
 \section*{System Design}
 
-JSProf is divided into two main components: a profiler and a reporter. The profiler consists of a program instrumentor and a runtime statistics collector. The reporter consists of a set of functions to extract statistics from the call graph, and a front-end for visualization.
+The JSProf profiler consists of a program instrumentor and a runtime statistics collector. The JSProf reporter consists of a set of functions to extract statistics from the call graph, and a front-end for visualization.
 
 \subsection*{Profiler}
 
